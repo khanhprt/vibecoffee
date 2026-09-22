@@ -10,6 +10,7 @@ import profileRoutes from "./routes/profileRoutes.js";
 import questRoutes from "./routes/questRoutes.js";
 import voucherRoutes from "./routes/voucherRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
+import { prisma } from "./config/database.js";
 
 const app = express();
 
@@ -17,7 +18,14 @@ app.use(helmet());
 app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: "2mb" }));
 
-app.get("/health", (req, res) => res.json({ ok: true, name: "vibe-coffee-api" }));
+app.get("/health", async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return res.json({ ok: true, database: "connected", name: "vibe-coffee-api" });
+  } catch {
+    return res.status(503).json({ ok: false, database: "disconnected", name: "vibe-coffee-api" });
+  }
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/cafes", cafeRoutes);

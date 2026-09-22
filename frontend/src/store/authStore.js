@@ -7,6 +7,7 @@ export const useAuthStore = create((set) => ({
     localStorage.setItem("vibe_token", token);
     set({ user, token });
   },
+  setUser: (user) => set({ user }),
   logout: () => {
     localStorage.removeItem("vibe_token");
     set({ user: null, token: null });

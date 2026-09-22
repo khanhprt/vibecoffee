@@ -9,11 +9,27 @@ const profileSelect = {
   bio: true,
   totalPoints: true,
   level: true,
-  createdAt: true
+  createdAt: true,
+  _count: {
+    select: {
+      checkins: true,
+      photos: true,
+      followers: true,
+      following: true
+    }
+  }
 };
 
-export function me(req, res) {
-  return ok(res, req.user);
+export async function me(req, res, next) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: profileSelect
+    });
+    return ok(res, user);
+  } catch (error) {
+    return next(error);
+  }
 }
 
 export async function profileByUsername(req, res, next) {

@@ -14,6 +14,17 @@ const publicUserSelect = {
 };
 
 export async function registerUser({ username, email, password }) {
+  const existingUser = await prisma.user.findFirst({
+    where: { OR: [{ email }, { username }] },
+    select: { email: true, username: true }
+  });
+
+  if (existingUser) {
+    return {
+      conflict: existingUser.email === email ? "EMAIL_EXISTS" : "USERNAME_EXISTS"
+    };
+  }
+
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
     data: { username, email, passwordHash },
@@ -30,8 +41,10 @@ export async function loginUser({ email, password }) {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return null;
 
-  const publicUser = await prisma.user.findUnique({ where: { id: user.id }, select: publicUserSelect });
-  return { user: publicUser, token: signToken(user) };
+  return {
+    user: toPublicUser(user),
+    token: signToken(user)
+  };
 }
 
 export function toPublicUser(user) {

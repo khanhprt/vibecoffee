@@ -1,3 +1,4 @@
+import "dotenv/config";
 import bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
 
@@ -18,8 +19,11 @@ async function main() {
     }
   });
 
-  const cafe = await prisma.cafe.create({
-    data: {
+  const cafe = await prisma.cafe.upsert({
+    where: { id: "seed-pink-pixel-brew" },
+    update: {},
+    create: {
+      id: "seed-pink-pixel-brew",
       name: "Pink Pixel Brew",
       address: "12 Nguyen Hue, Quan 1, TP.HCM",
       lat: 10.7731,
@@ -40,8 +44,11 @@ async function main() {
     skipDuplicates: true
   });
 
-  await prisma.photo.create({
-    data: {
+  await prisma.photo.upsert({
+    where: { id: "seed-first-vibe-check" },
+    update: {},
+    create: {
+      id: "seed-first-vibe-check",
       userId: user.id,
       cafeId: cafe.id,
       url: "https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=600&q=80",

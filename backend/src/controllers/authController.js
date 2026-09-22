@@ -6,6 +6,12 @@ export async function register(req, res, next) {
   try {
     const payload = registerSchema.parse(req.body);
     const session = await registerUser(payload);
+    if (session.conflict === "EMAIL_EXISTS") {
+      return fail(res, "EMAIL_EXISTS", "Email da duoc su dung", 409);
+    }
+    if (session.conflict === "USERNAME_EXISTS") {
+      return fail(res, "USERNAME_EXISTS", "Ten dang nhap da duoc su dung", 409);
+    }
     return ok(res, session, "Dang ky thanh cong", 201);
   } catch (error) {
     return next(error);

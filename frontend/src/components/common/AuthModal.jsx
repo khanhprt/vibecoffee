@@ -81,7 +81,11 @@ export default function AuthModal({ mode, onClose }) {
       setForm(initialForm);
       onClose();
     } catch (err) {
-      const data = err?.response?.data;
+      const responseData = err?.response?.data;
+      const data = {
+        ...responseData,
+        error: responseData?.error?.message || responseData?.error
+      };
       setError(data?.error || data?.message || "Có lỗi xảy ra, thử lại nhé!");
     } finally {
       setSubmitting(false);
