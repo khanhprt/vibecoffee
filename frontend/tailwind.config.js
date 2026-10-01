@@ -26,7 +26,7 @@ export default {
         }
       },
       fontFamily: {
-        pixel: ["Press Start 2P", "monospace"],
+        pixel: ["VT323", "monospace"],
         body: ["VT323", "monospace"],
         display: ["Pixelify Sans", "monospace"]
       }

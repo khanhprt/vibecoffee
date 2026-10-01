@@ -5,6 +5,7 @@ import Map from "./pages/Map.jsx";
 import Quests from "./pages/Quests.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 import Profile from "./pages/Profile.jsx";
+import About from "./pages/About.jsx";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/map" element={<Map />} />
         <Route path="/quests" element={<Quests />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/about" element={<About />} />
         <Route path="/profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

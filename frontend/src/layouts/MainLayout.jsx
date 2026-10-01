@@ -13,9 +13,10 @@ import {
   Tooltip
 } from "@chakra-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Coffee, LogOut, Map, Medal, Pause, Play, Search, ScrollText, UserRound } from "lucide-react";
+import { Coffee, Heart, LogOut, Map, Medal, Pause, Play, Search, ScrollText, UserRound } from "lucide-react";
 import { Link as RouterLink, NavLink, useLocation, useOutlet } from "react-router-dom";
 import AuthModal from "../components/common/AuthModal.jsx";
+import SiteFooter from "../components/common/SiteFooter.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import * as authService from "../services/authService.js";
 
@@ -23,7 +24,8 @@ const navItems = [
   { to: "/", label: "Home", icon: Coffee },
   { to: "/map", label: "Map", icon: Map },
   { to: "/quests", label: "Vibe Quest", icon: ScrollText },
-  { to: "/leaderboard", label: "Vibe Board", icon: Medal }
+  { to: "/leaderboard", label: "Vibe Board", icon: Medal },
+  { to: "/about", label: "About", icon: Heart }
 ];
 
 const headerCopy = {
@@ -49,6 +51,14 @@ export default function MainLayout() {
   const isMap = location.pathname === "/map";
   const isQuest = location.pathname === "/quests";
   const isProfile = location.pathname === "/profile";
+  const isBoard = location.pathname === "/leaderboard";
+  const isAbout = location.pathname === "/about";
+  const isFullPage = isHome || isMap || isQuest || isBoard || isAbout;
+  const isImmersive = isHome || isMap || isQuest;
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!token || user) return;
@@ -88,11 +98,12 @@ export default function MainLayout() {
   };
 
   return (
+    <>
     <Box
       bg="pink.50"
-      className={`${isHome || isMap || isQuest ? "app-shell app-shell-full" : "app-shell"}${isProfile ? " profile-shell" : ""}`}
+      className={`${isImmersive ? "app-shell app-shell-full" : "app-shell"}${isProfile ? " profile-shell" : ""}`}
       data-motion={motionEnabled ? "on" : "off"}
-      minH={isHome || isMap || isQuest ? undefined : "100vh"}
+      minH={isImmersive ? undefined : "100vh"}
     >
       <Box as="header" className="site-header">
         <Container maxW="none" px={{ base: 4, lg: 8 }} py={3}>
@@ -123,9 +134,6 @@ export default function MainLayout() {
                   </ChakraLink>
                 );
               })}
-              <ChakraLink href="#about" className="nav-link" _hover={{ textDecoration: "none" }}>
-                About
-              </ChakraLink>
             </Flex>
 
             <Flex className="header-actions" align="center" gap={4}>
@@ -180,7 +188,7 @@ export default function MainLayout() {
           </Flex>
         </Container>
       </Box>
-      {isHome || isMap || isQuest || isProfile ? (
+      {isFullPage || isProfile ? (
         <Box as="main">
           {animatedOutlet}
         </Box>
@@ -192,5 +200,7 @@ export default function MainLayout() {
 
       <AuthModal mode={authMode} onClose={() => setAuthMode(null)} />
     </Box>
+    <SiteFooter user={user} onOpenAuth={setAuthMode} motionEnabled={motionEnabled} />
+    </>
   );
 }

@@ -26,7 +26,7 @@ const colors = {
 const theme = extendTheme({
   colors,
   fonts: {
-    heading: "'Press Start 2P', monospace",
+    heading: "'VT323', monospace",
     body: "'VT323', monospace"
   },
   styles: {
@@ -44,8 +44,8 @@ const theme = extendTheme({
         border: "3px solid",
         borderColor: "pixel.dark",
         boxShadow: "4px 4px 0 0 #2D1B2E",
-        fontFamily: "'Press Start 2P', monospace",
-        fontSize: "xs",
+        fontFamily: "'VT323', monospace",
+        fontSize: "1.25rem",
         _hover: {
           transform: "translate(2px, 2px)",
           boxShadow: "2px 2px 0 0 #2D1B2E"
