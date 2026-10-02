@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Camera, ChevronDown, Crown, Medal, Star, Trophy } from "lucide-react";
+import { Camera, ChevronDown, Crown, Heart, Medal, Sparkles, Star, Trophy } from "lucide-react";
 import AmbientPetals from "../components/common/AmbientPetals.jsx";
+import PixelAvatar from "../components/common/PixelAvatar.jsx";
+import { assetUrl } from "../utils/assetUrl.js";
 
 const tabs = [
   { id: "overall", label: "Bảng xếp hạng chung", icon: Trophy },
@@ -63,24 +65,28 @@ export default function Leaderboard() {
           <FilterGroup icon="calendar" title="Thời gian" items={filters.time} />
           <FilterGroup icon="pin" title="Khu vực" items={filters.region} withSelect />
           <div className="board-cat-note">
-            <img src="/assets/board-calico-cat.png" alt="Mèo tam thể pixel" />
+            <img src={assetUrl("board-calico-cat.png")} alt="Mèo tam thể pixel" />
             <p>Cùng nhau tạo nên cộng đồng yêu cà phê thật tuyệt vời nhé!</p>
           </div>
         </aside>
 
         <main className="board-main">
           <div className="sparkle-field" aria-hidden="true">
-            {Array.from({ length: 18 }).map((_, index) => <i key={index} />)}
+            {Array.from({ length: 14 }).map((_, index) => (
+              <i key={index}>{index % 3 === 0 ? <Heart size={15} fill="#ffc2db" /> : <Sparkles size={13} fill="#fff0a6" />}</i>
+            ))}
           </div>
           <div className="podium-row">
-            {podium.map((user, index) => (
+            {podium.map((user) => (
               <article className={`podium-card place-${user.rank}`} key={user.username}>
-                <Crown size={index === 1 ? 42 : 34} />
-                <BoardAvatar user={user} />
+                <span className={`podium-crown crown-${user.rank}`} aria-hidden="true" />
+                <PixelAvatar user={user} className="board-avatar" />
                 <h2>{user.username}</h2>
                 <p>Lv. {user.level} <b>{user.badge}</b></p>
-                <strong><Medal size={20} /> {user.checkins}</strong>
-                <small>Vibe Check</small>
+                <div className="podium-score">
+                  <span className="podium-coffee" aria-hidden="true" />
+                  <div><strong>{user.checkins}</strong><small>Vibe Check</small></div>
+                </div>
               </article>
             ))}
           </div>
@@ -97,7 +103,7 @@ export default function Leaderboard() {
             {rows.map((user) => (
               <div className="leader-row" role="row" key={user.username}>
                 <span>{user.rank}</span>
-                <span><BoardAvatar user={user} small />{user.username}</span>
+                <span><PixelAvatar user={user} className="mini-avatar" />{user.username}</span>
                 <span>Lv. {user.level} <b>{user.badge}</b></span>
                 <span><Medal size={17} />{user.checkins}</span>
                 <span>{user.quests}</span>
@@ -108,22 +114,6 @@ export default function Leaderboard() {
         </main>
       </div>
     </section>
-  );
-}
-
-function BoardAvatar({ user, small = false }) {
-  const index = user.rank - 1;
-
-  return (
-    <span
-      className={small ? "mini-avatar" : "board-avatar"}
-      role="img"
-      aria-label={`Avatar ${user.username}`}
-      style={{
-        "--avatar-x": `${(index % 5) * 25}%`,
-        "--avatar-y": index < 5 ? "35.5%" : "63%"
-      }}
-    />
   );
 }
 

@@ -1,5 +1,8 @@
-import { ArrowRight, ArrowUp, Coffee, Heart, MapPin, UserRound } from "lucide-react";
+import { ArrowRight, ArrowUp, Coffee, Heart, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import PixelAvatar from "./PixelAvatar.jsx";
+import { isDemoMode } from "../../services/demoService.js";
+import { assetUrl } from "../../utils/assetUrl.js";
 
 const exploreLinks = [
   { to: "/", label: "Trang chủ" },
@@ -41,14 +44,14 @@ export default function SiteFooter({ user, onOpenAuth, motionEnabled }) {
             <h2>Cùng nhau tạo nên Vibe</h2>
             <Link to="/about" className="footer-about-link">Về Vibe Coffee <ArrowRight size={16} aria-hidden="true" /></Link>
             <div className="footer-community-note">
-              <img src="/assets/board-calico-cat.png" alt="" width="64" height="72" loading="lazy" />
+              <img src={assetUrl("board-calico-cat.png")} alt="" width="64" height="72" loading="lazy" />
               <p>Good Coffee.<br />Better People.</p>
             </div>
             {user ? (
-              <Link to="/profile" className="footer-join"><UserRound size={17} aria-hidden="true" /> My Vibe <ArrowRight size={17} aria-hidden="true" /></Link>
+              <Link to="/profile" className="footer-join"><PixelAvatar user={user} className="header-avatar" /> My Vibe <ArrowRight size={17} aria-hidden="true" /></Link>
             ) : (
               <div className="footer-auth">
-                <button type="button" className="footer-join" onClick={() => onOpenAuth("register")}>Tham gia cộng đồng <ArrowRight size={17} aria-hidden="true" /></button>
+                <button type="button" className="footer-join" onClick={() => onOpenAuth(isDemoMode ? "login" : "register")}>{isDemoMode ? "Vào tài khoản demo" : "Tham gia cộng đồng"} <ArrowRight size={17} aria-hidden="true" /></button>
                 <button type="button" className="footer-login" onClick={() => onOpenAuth("login")}>Đăng nhập</button>
               </div>
             )}

@@ -28,18 +28,19 @@ import {
   Users
 } from "lucide-react";
 import PixelModal from "../components/common/PixelModal.jsx";
+import PixelAvatar from "../components/common/PixelAvatar.jsx";
 import PhotoGrid from "../components/profile/PhotoGrid.jsx";
 import ProfileHeader from "../components/profile/ProfileHeader.jsx";
 import { useAuth } from "../hooks/useAuth.js";
-import api from "../services/api.js";
+import { getMyProfile, getPhotos, updateMyProfile } from "../services/profileService.js";
+import { assetUrl } from "../utils/assetUrl.js";
 
-const DEFAULT_COVER = "/assets/profile-hoan-kiem-cover.png";
-const DEFAULT_AVATAR = "/assets/profile-coffee-avatar.png";
+const DEFAULT_COVER = assetUrl("profile-hoan-kiem-cover.png");
 const DEFAULT_GALLERY = [
-  "/assets/profile-coffee-garden.png",
-  "/assets/profile-hoan-kiem-cover.png",
-  "/assets/home-hero-composite.png",
-  "/assets/bottom-left-coffee-scene.png"
+  assetUrl("profile-coffee-garden.png"),
+  assetUrl("profile-hoan-kiem-cover.png"),
+  assetUrl("home-hero-composite.png"),
+  assetUrl("bottom-left-coffee-scene.png")
 ];
 
 const badges = [
@@ -67,21 +68,11 @@ const tabs = [
   { id: "saved", label: "Da luu", icon: Bookmark }
 ];
 
-async function getMyProfile() {
-  const { data } = await api.get("/profile/me");
-  return data.data;
-}
-
-async function getPhotos(userId) {
-  const { data } = await api.get(`/profile/${userId}/photos`);
-  return data.data;
-}
-
 function FeedPost({ profile, images, secondary = false }) {
   return (
     <article className="profile-post">
       <header>
-        <img src={profile.avatarUrl || DEFAULT_AVATAR} alt="" />
+        <PixelAvatar user={profile} className="post-avatar" />
         <div>
           <strong>{profile.username}</strong>
           <span>{secondary ? "3 ngay truoc tai Lofita" : "2 gio truoc tai The Coffee House"}</span>
@@ -127,10 +118,7 @@ export default function Profile() {
     enabled: Boolean(profileQuery.data?.id)
   });
   const updateProfile = useMutation({
-    mutationFn: async (payload) => {
-      const { data } = await api.put("/profile/me", payload);
-      return data.data;
-    },
+    mutationFn: updateMyProfile,
     onSuccess: (profile) => {
       queryClient.setQueryData(["profile", "me"], profile);
       setUser(profile);
@@ -222,7 +210,7 @@ export default function Profile() {
             <section className="profile-side-panel level-panel">
               <div className="side-heading"><h2>Cap do hien tai</h2><span>Lv. {level}</span></div>
               <div className="level-summary">
-                <img src="/assets/quest-coffee-medallion.png" alt="Huy hieu cap do" />
+                <img src={assetUrl("quest-coffee-medallion.png")} alt="Huy hieu cap do" />
                 <div>
                   <strong>{profile.level}</strong>
                   <div className="profile-xp-track"><i style={{ width: `${levelProgress}%` }} /></div>
@@ -249,7 +237,7 @@ export default function Profile() {
               <div className="friend-list">
                 {friends.map((friend, index) => (
                   <div className="friend-row" key={friend.name}>
-                    <span className={`friend-avatar tone-${index + 1}`}>{friend.initials}</span>
+                    <PixelAvatar user={{ username: friend.name }} className={`friend-avatar tone-${index + 1}`} />
                     <div><strong>{friend.name}</strong><small>{friend.note}</small></div>
                     <button type="button">Theo doi</button>
                   </div>

@@ -1,7 +1,7 @@
-import { Avatar, Button } from "@chakra-ui/react";
+import { Button } from "@chakra-ui/react";
 import { CalendarDays, Camera, MapPin, Pencil } from "lucide-react";
 
-const FALLBACK_AVATAR = "/assets/profile-coffee-avatar.png";
+import PixelAvatar from "../common/PixelAvatar.jsx";
 
 export default function ProfileHeader({ user, coverUrl, onCoverSelect, onEdit }) {
   const counts = user._count || {};
@@ -29,11 +29,7 @@ export default function ProfileHeader({ user, coverUrl, onCoverSelect, onEdit })
       </div>
 
       <div className="profile-identity">
-        <Avatar
-          className="profile-avatar"
-          name={user.username}
-          src={user.avatarUrl || FALLBACK_AVATAR}
-        />
+        <PixelAvatar className="profile-avatar" user={user} />
         <div className="profile-copy">
           <div className="profile-name-row">
             <div>

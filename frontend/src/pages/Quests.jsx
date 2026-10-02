@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { assetUrl } from "../utils/assetUrl.js";
 import { BookOpen, Camera, ChevronRight, CircleHelp, Coffee, Flame, Gift, MapPinned, Medal, MessageSquare, ScrollText, Trophy } from "lucide-react";
 
 const dailyQuests = [
@@ -31,11 +33,11 @@ export default function Quests() {
       <div className="quest-scribble">Thêm cà phê<br />Thêm những ngày đẹp<br />ở Hà Nội ♡</div>
     </main>
     <aside className="quest-panel quest-reward-panel">
-      <div className="reward-heading"><img src="/assets/quest-trophy.png" alt="" /><h2>Phần thưởng & cấp độ</h2></div><div className="level-card"><span className="level-medallion"><img src="/assets/quest-coffee-medallion.png" alt="" /></span><div><b>Lv. 4</b><span className="level-tag">Explorer</span><div className="level-progress"><i /></div><small>1,280 / 2,000 XP</small></div></div>
-      <div className="collection-head"><b>Bộ sưu tập huy hiệu</b><a href="#collection">Xem tất cả <ChevronRight /></a></div><div className="badge-row"><Badge icon={Coffee} label="First Sip" /><Badge icon={BookOpen} label="Hanoi Lover" /><Badge icon={Camera} label="Foodie" /><Badge icon={CircleHelp} label="Secret" muted /></div>
+      <div className="reward-heading"><img src={assetUrl("quest-trophy.png")} alt="" /><h2>Phần thưởng & cấp độ</h2></div><div className="level-card"><span className="level-medallion"><img src={assetUrl("quest-coffee-medallion.png")} alt="" /></span><div><b>Lv. 4</b><span className="level-tag">Explorer</span><div className="level-progress"><i /></div><small>1,280 / 2,000 XP</small></div></div>
+      <div className="collection-head"><b>Bộ sưu tập huy hiệu</b><button type="button" onClick={() => document.getElementById("collection")?.scrollIntoView({ block: "nearest" })}>Xem tất cả <ChevronRight /></button></div><div className="badge-row" id="collection"><Badge icon={Coffee} label="First Sip" /><Badge icon={BookOpen} label="Hanoi Lover" /><Badge icon={Camera} label="Foodie" /><Badge icon={CircleHelp} label="Secret" muted /></div>
       <div className="streak"><Flame /><b>Chuỗi ngày khám phá</b><strong>7 ngày liên tiếp</strong></div><div className="day-row">{["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day, index) => <span className={index < 4 ? "complete" : ""} key={day}>{index < 4 ? "✓" : ""}<small>{day}</small></span>)}</div><blockquote>“Đi thật xa để tìm những hương vị gần gũi nhất.”<br /><b>— VIBE COFFEE —</b></blockquote>
     </aside>
-    <nav className="quest-dock" aria-label="Vibe tabs"><a href="/map"><MapPinned />Tìm quán</a><a className="active" href="/quests"><ScrollText />Vibe Quest</a><a href="/leaderboard"><Medal />Vibe Board</a><a href="/profile"><Camera />Vibe Album</a></nav>
+    <nav className="quest-dock" aria-label="Vibe tabs"><Link to="/map"><MapPinned />Tìm quán</Link><Link className="active" to="/quests"><ScrollText />Vibe Quest</Link><Link to="/leaderboard"><Medal />Vibe Board</Link><Link to="/profile"><Camera />Vibe Album</Link></nav>
   </section>;
 }
-function Badge({ icon: Icon, label, muted }) { return <div className={`collect-badge ${muted ? "is-muted" : ""}`}><span>{label === "First Sip" ? <img src="/assets/quest-coffee-medallion.png" alt="" /> : <Icon />}</span><b>{label}</b></div>; }
+function Badge({ icon: Icon, label, muted }) { return <div className={`collect-badge ${muted ? "is-muted" : ""}`}><span>{label === "First Sip" ? <img src={assetUrl("quest-coffee-medallion.png")} alt="" /> : <Icon />}</span><b>{label}</b></div>; }

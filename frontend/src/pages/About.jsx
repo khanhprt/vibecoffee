@@ -1,5 +1,6 @@
 import { BookOpen, CheckSquare, Gift, Heart, MapPinned, Users } from "lucide-react";
 import AmbientPetals from "../components/common/AmbientPetals.jsx";
+import { assetUrl } from "../utils/assetUrl.js";
 
 const features = [
   {
@@ -52,7 +53,7 @@ export default function About() {
       </div>
 
       <div className="about-story">
-        <img src="/assets/about-cafe-scene.png" alt="Quán cà phê pixel bên bờ sông lúc hoàng hôn" />
+        <img src={assetUrl("about-cafe-scene.png")} alt="Quán cà phê pixel bên bờ sông lúc hoàng hôn" />
         <article>
           <h2>Tại sao là Vibe Coffee?</h2>
           <p>

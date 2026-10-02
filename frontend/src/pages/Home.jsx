@@ -57,6 +57,7 @@ const copy = {
 
 export default function Home() {
   return (
+    <>
     <section className="home-hero">
       {petals.map((petal, index) => (
         <span
@@ -94,11 +95,12 @@ export default function Home() {
           })}
         </Flex>
 
-        <div className="speech-note">
-          {copy.speech}<br />{copy.speechSecond}
-          <span><Coffee size={14} /> <Heart size={14} /></span>
-        </div>
       </Box>
+
+      <div className="speech-note">
+        {copy.speech}<br />{copy.speechSecond}
+        <span><Coffee size={14} /> <Heart size={14} /></span>
+      </div>
 
       <Box className="map-stage-home" aria-label={copy.mapLabel}>
         <div className="hanoi-sign">Hanoi</div>
@@ -144,6 +146,8 @@ export default function Home() {
         </div>
       </Box>
 
+    </section>
+
       <Flex className="stats-bar" as="dl">
         {stats.map((stat) => {
           const Icon = stat.icon;
@@ -158,6 +162,6 @@ export default function Home() {
           );
         })}
       </Flex>
-    </section>
+    </>
   );
 }

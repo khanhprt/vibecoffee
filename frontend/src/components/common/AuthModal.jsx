@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Alert,
   AlertIcon,
@@ -14,6 +15,7 @@ import { Coffee, Heart } from "lucide-react";
 import PixelModal from "./PixelModal.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
 import * as authService from "../../services/authService.js";
+import { isDemoMode } from "../../services/demoService.js";
 
 const copy = {
   login: {
@@ -43,6 +45,7 @@ const inputStyle = {
 };
 
 export default function AuthModal({ mode, onClose }) {
+  const navigate = useNavigate();
   const { setSession } = useAuth();
   const [view, setView] = useState(mode);
   const [form, setForm] = useState(initialForm);
@@ -50,7 +53,7 @@ export default function AuthModal({ mode, onClose }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    setView(mode);
+    setView(isDemoMode && mode ? "login" : mode);
     setError("");
   }, [mode]);
 
@@ -80,13 +83,14 @@ export default function AuthModal({ mode, onClose }) {
       setSession(session);
       setForm(initialForm);
       onClose();
+      if (isDemoMode) navigate("/profile");
     } catch (err) {
       const responseData = err?.response?.data;
       const data = {
         ...responseData,
         error: responseData?.error?.message || responseData?.error
       };
-      setError(data?.error || data?.message || "Có lỗi xảy ra, thử lại nhé!");
+      setError(data?.error || data?.message || err.message || "Có lỗi xảy ra, thử lại nhé!");
     } finally {
       setSubmitting(false);
     }
@@ -120,13 +124,14 @@ export default function AuthModal({ mode, onClose }) {
 
           <FormControl isRequired>
             <FormLabel fontFamily="'VT323', monospace" fontSize="1.2rem">
-              Email
+              {isDemoMode ? "Tên đăng nhập" : "Email"}
             </FormLabel>
             <Input
-              type="email"
+              type={isDemoMode ? "text" : "email"}
+              autoComplete={isDemoMode ? "username" : "email"}
               value={form.email}
               onChange={updateField("email")}
-              placeholder="ban@vibecoffee.vn"
+              placeholder={isDemoMode ? "admin" : "ban@vibecoffee.vn"}
               {...inputStyle}
             />
           </FormControl>
@@ -174,7 +179,7 @@ export default function AuthModal({ mode, onClose }) {
             {copy[view]?.cta}
           </Button>
 
-          <Text
+          {isDemoMode ? <Text textAlign="center">Tài khoản demo: admin / admin</Text> : <Text
             fontFamily="'VT323', monospace"
             fontSize="1.2rem"
             textAlign="center"
@@ -193,7 +198,7 @@ export default function AuthModal({ mode, onClose }) {
             >
               {copy[view]?.switchCta}
             </Button>
-          </Text>
+          </Text>}
 
           <Text
             fontFamily="'VT323', monospace"

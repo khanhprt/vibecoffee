@@ -18,7 +18,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Coffee,
-  Crown,
   Gift,
   Heart,
   ListChecks,
@@ -31,6 +30,9 @@ import {
   X
 } from "lucide-react";
 import { cafes, leaderboard, quests } from "../../data/mockData.js";
+import PixelAvatar from "../common/PixelAvatar.jsx";
+import { useAuth } from "../../hooks/useAuth.js";
+import { assetUrl } from "../../utils/assetUrl.js";
 
 const filters = [
   { label: "Tat ca", icon: Coffee, active: true },
@@ -47,9 +49,9 @@ const dockItems = [
 ];
 
 const regions = [
-  { id: "hoan-kiem", label: "Hoan Kiem", image: "/assets/map-hoan-kiem-pixel.png" },
-  { id: "pho-co", label: "Pho Co", image: "/assets/map-pho-co-pixel.png" },
-  { id: "ho-tay", label: "Ho Tay", image: "/assets/map-ho-tay-pixel.png" }
+  { id: "hoan-kiem", label: "Hoan Kiem", image: assetUrl("map-hoan-kiem-pixel.png") },
+  { id: "pho-co", label: "Pho Co", image: assetUrl("map-pho-co-pixel.png") },
+  { id: "ho-tay", label: "Ho Tay", image: assetUrl("map-ho-tay-pixel.png") }
 ];
 
 function CafeListCard({ cafe, active }) {
@@ -82,6 +84,7 @@ function CafeListCard({ cafe, active }) {
 
 function RightPanels() {
   const quest = quests[1];
+  const { user: currentUser } = useAuth();
 
   return (
     <Stack className="map-right-panels" spacing={4}>
@@ -91,7 +94,7 @@ function RightPanels() {
           <Text className="side-link">Xem tat ca</Text>
         </Flex>
         <Flex align="center" gap={3} mt={4}>
-          <Box className="side-avatar"><Crown size={22} /></Box>
+          <PixelAvatar user={currentUser} className="side-avatar" />
           <Box flex="1">
             <Text className="quest-title">{quest.description}</Text>
             <HStack>
@@ -112,7 +115,7 @@ function RightPanels() {
           {leaderboard.map((user, index) => (
             <Flex key={user.id} className={user.id === "me" ? "rank-row current" : "rank-row"} align="center">
               <Text className="rank-number">{user.rank || index + 1}</Text>
-              <Box className="rank-avatar" />
+              <PixelAvatar user={user.id === "me" && currentUser ? currentUser : user} className="rank-avatar" />
               <Text flex="1">{user.username}</Text>
               <Text fontWeight="900">{user.points.toLocaleString("en-US")}</Text>
             </Flex>

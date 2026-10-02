@@ -12,13 +12,15 @@ import {
   Link as ChakraLink,
   Tooltip
 } from "@chakra-ui/react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Coffee, Heart, LogOut, Map, Medal, Pause, Play, Search, ScrollText, UserRound } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Coffee, Heart, LogOut, Map, Medal, Pause, Play, Search, ScrollText } from "lucide-react";
 import { Link as RouterLink, NavLink, useLocation, useOutlet } from "react-router-dom";
 import AuthModal from "../components/common/AuthModal.jsx";
 import SiteFooter from "../components/common/SiteFooter.jsx";
+import PixelAvatar from "../components/common/PixelAvatar.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import * as authService from "../services/authService.js";
+import { isDemoMode } from "../services/demoService.js";
 
 const navItems = [
   { to: "/", label: "Home", icon: Coffee },
@@ -44,9 +46,12 @@ export default function MainLayout() {
   const outlet = useOutlet();
   const { user, token, setUser, logout: clearSession } = useAuth();
   const [authMode, setAuthMode] = useState(null);
-  const [motionEnabled, setMotionEnabled] = useState(
-    () => localStorage.getItem("vibe-coffee-motion") !== "off"
-  );
+  const prefersReducedMotion = useReducedMotion();
+  const [motionPreference, setMotionPreference] = useState(() => {
+    const savedPreference = localStorage.getItem("vibe-coffee-motion");
+    return savedPreference === "on" || savedPreference === "off" ? savedPreference : null;
+  });
+  const motionEnabled = motionPreference === null ? !prefersReducedMotion : motionPreference === "on";
   const isHome = location.pathname === "/";
   const isMap = location.pathname === "/map";
   const isQuest = location.pathname === "/quests";
@@ -54,7 +59,7 @@ export default function MainLayout() {
   const isBoard = location.pathname === "/leaderboard";
   const isAbout = location.pathname === "/about";
   const isFullPage = isHome || isMap || isQuest || isBoard || isAbout;
-  const isImmersive = isHome || isMap || isQuest;
+  const isImmersive = isMap || isQuest;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -82,11 +87,9 @@ export default function MainLayout() {
   );
 
   const toggleMotion = () => {
-    setMotionEnabled((currentValue) => {
-      const nextValue = !currentValue;
-      localStorage.setItem("vibe-coffee-motion", nextValue ? "on" : "off");
-      return nextValue;
-    });
+    const nextPreference = motionEnabled ? "off" : "on";
+    localStorage.setItem("vibe-coffee-motion", nextPreference);
+    setMotionPreference(nextPreference);
   };
 
   const handleLogout = async () => {
@@ -100,7 +103,7 @@ export default function MainLayout() {
   return (
     <>
     <Box
-      bg="pink.50"
+      bg={isBoard || isAbout ? "#fff7fa" : "pink.50"}
       className={`${isImmersive ? "app-shell app-shell-full" : "app-shell"}${isProfile ? " profile-shell" : ""}`}
       data-motion={motionEnabled ? "on" : "off"}
       minH={isImmersive ? undefined : "100vh"}
@@ -159,7 +162,7 @@ export default function MainLayout() {
                     as={RouterLink}
                     to="/profile"
                     className="auth-btn auth-outline"
-                    leftIcon={<UserRound size={18} />}
+                    leftIcon={<PixelAvatar user={user} className="header-avatar" />}
                     variant="outline"
                   >
                     {user.username || headerCopy.profile}
@@ -179,9 +182,9 @@ export default function MainLayout() {
                   <Button onClick={() => setAuthMode("login")} variant="outline" className="auth-btn auth-outline">
                     {headerCopy.login}
                   </Button>
-                  <Button onClick={() => setAuthMode("register")} className="auth-btn auth-solid">
+                  {!isDemoMode && <Button onClick={() => setAuthMode("register")} className="auth-btn auth-solid">
                     {headerCopy.register}
-                  </Button>
+                  </Button>}
                 </>
               )}
             </Flex>
