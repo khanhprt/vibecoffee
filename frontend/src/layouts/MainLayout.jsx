@@ -12,7 +12,7 @@ import {
   Link as ChakraLink,
   Tooltip
 } from "@chakra-ui/react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Coffee, Heart, LogOut, Map, Medal, Pause, Play, Search, ScrollText } from "lucide-react";
 import { Link as RouterLink, NavLink, useLocation, useOutlet } from "react-router-dom";
 import AuthModal from "../components/common/AuthModal.jsx";
@@ -46,12 +46,11 @@ export default function MainLayout() {
   const outlet = useOutlet();
   const { user, token, setUser, logout: clearSession } = useAuth();
   const [authMode, setAuthMode] = useState(null);
-  const prefersReducedMotion = useReducedMotion();
   const [motionPreference, setMotionPreference] = useState(() => {
     const savedPreference = localStorage.getItem("vibe-coffee-motion");
-    return savedPreference === "on" || savedPreference === "off" ? savedPreference : null;
+    return savedPreference === "off" ? "off" : "on";
   });
-  const motionEnabled = motionPreference === null ? !prefersReducedMotion : motionPreference === "on";
+  const motionEnabled = motionPreference === "on";
   const isHome = location.pathname === "/";
   const isMap = location.pathname === "/map";
   const isQuest = location.pathname === "/quests";
