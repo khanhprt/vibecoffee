@@ -6,6 +6,7 @@ import {
   HStack,
   Image,
   Input,
+  Select,
   Progress,
   SimpleGrid,
   Stack,
@@ -13,9 +14,9 @@ import {
   useToast
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Camera,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Coffee,
@@ -33,13 +34,17 @@ import {
 import PixelAvatar from "../common/PixelAvatar.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
 import { assetUrl } from "../../utils/assetUrl.js";
-import { checkInCafe, getNearbyCafes, toggleFavorite } from "../../services/cafeService.js";
+import { getNearbyCafes, toggleFavorite } from "../../services/cafeService.js";
+import { me } from "../../services/authService.js";
+import VibeCheckModal from "./VibeCheckModal.jsx";
+import CafeLocationModal from "./CafeLocationModal.jsx";
 import { getLeaderboard } from "../../services/leaderboardService.js";
 import { getQuests } from "../../services/questService.js";
+import { filterCafes } from "../../data/filterCafes.js";
 
 const filters = [
   { label: "Tat ca", icon: Coffee, vibe: "all" },
-  { label: "Gan day", icon: LocateFixed, vibe: "all" },
+  { label: "Gan day", icon: LocateFixed, vibe: "nearby" },
   { label: "Yeu thich", icon: Heart, vibe: "favorite" },
   { label: "Lam viec", icon: Camera, vibe: "lam-viec" }
 ];
@@ -57,13 +62,13 @@ const regions = [
   { id: "ho-tay", label: "Ho Tay", image: assetUrl("map-ho-tay-pixel.png") }
 ];
 
-function CafeListCard({ cafe, active, onCheckIn, onFavorite }) {
+function CafeListCard({ cafe, active, onCheckIn, onFavorite, onOpenMap }) {
   return (
     <Box className={`map-cafe-card ${active ? "is-active" : ""}`}>
       <Image src={cafe.coverUrl} alt={cafe.name} className="map-cafe-thumb" />
       <Box minW={0} flex="1">
         <Flex align="start" justify="space-between" gap={2}>
-          <Text className="map-cafe-name">{cafe.name}</Text>
+          <Text as="button" type="button" className="map-cafe-name map-cafe-map-link" onClick={() => onOpenMap(cafe)} aria-label={`Xem ban do ${cafe.name}`}>{cafe.name}</Text>
           <Button className="pager" onClick={() => onFavorite(cafe.id)} aria-label="Luu quan yeu thich">
             <Heart className="map-heart" size={18} fill={cafe.favorite ? "#ff6fa5" : "none"} />
           </Button>
@@ -94,7 +99,7 @@ function CafeListCard({ cafe, active, onCheckIn, onFavorite }) {
   );
 }
 
-function RightPanels() {
+function RightPanels({ revision }) {
   const [quests, setQuests] = useState([]);
   const [board, setBoard] = useState([]);
   const { user: currentUser } = useAuth();
@@ -103,7 +108,7 @@ function RightPanels() {
   useEffect(() => {
     getQuests().then(setQuests);
     getLeaderboard({ period: "week" }).then((data) => setBoard(data.users || data));
-  }, []);
+  }, [revision]);
 
   return (
     <Stack className="map-right-panels" spacing={4}>
@@ -149,44 +154,51 @@ function RightPanels() {
 
 export default function MapView() {
   const toast = useToast();
+  const queryClient = useQueryClient();
+  const { setUser } = useAuth();
+  const [checkinCafe, setCheckinCafe] = useState(null);
+  const [locationCafe, setLocationCafe] = useState(null);
+  const [revision, setRevision] = useState(0);
   const [selectedRegion, setSelectedRegion] = useState(regions[0]);
   const [activeVibe, setActiveVibe] = useState("all");
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [maxDistance, setMaxDistance] = useState("");
+  const [district, setDistrict] = useState("");
+  const [minRating, setMinRating] = useState("");
+  const [page, setPage] = useState(1);
   const [cafes, setCafes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-  async function loadCafes(nextVibe = activeVibe) {
-    const data = await getNearbyCafes({
-      lat: 21.0286,
-      lng: 105.8524,
-      radius: 5000,
-      vibe: nextVibe === "favorite" ? "all" : nextVibe
-    });
-    const filtered = nextVibe === "favorite" ? data.filter((cafe) => cafe.favorite) : data;
-    setCafes(filtered);
-    return filtered;
+  async function loadCafes() {
+    setCafes(await getNearbyCafes({ lat: 21.0286, lng: 105.8524, radius: 15000 }));
   }
 
   useEffect(() => {
-    loadCafes();
+    let cancelled = false;
+    getNearbyCafes({ lat: 21.0286, lng: 105.8524, radius: 15000 })
+      .then((data) => { if (!cancelled) setCafes(data); })
+      .catch(() => { if (!cancelled) setLoadError("Khong the tai danh sach quan. Thu tai lai trang."); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, []);
 
-  async function handleSearch(event) {
+  function handleSearch(event) {
     event.preventDefault();
-    const keyword = query.trim().toLowerCase();
-    if (!keyword) return;
-    setResults(await getNearbyCafes({ q: keyword }));
+    setSearchTerm(query.trim());
+    setPage(1);
   }
 
   function clearSearch() {
     setQuery("");
-    setResults(null);
+    setSearchTerm("");
+    setPage(1);
   }
 
-  async function handleFilter(filter) {
+  function handleFilter(filter) {
     setActiveVibe(filter.vibe);
-    setResults(null);
-    await loadCafes(filter.vibe);
+    setPage(1);
   }
 
   async function handleFavorite(cafeId) {
@@ -195,23 +207,25 @@ export default function MapView() {
     toast({ title: "Da cap nhat quan yeu thich", status: "success", duration: 1600, position: "top" });
   }
 
-  async function handleCheckIn(cafe) {
-    try {
-      const result = await checkInCafe({ cafeId: cafe.id, lat: cafe.lat, lng: cafe.lng, photoUrl: cafe.coverUrl });
-      await loadCafes();
-      toast({
-        title: `Vibe Check thanh cong tai ${cafe.name}`,
-        description: `+${result.pointsAdded || result.points || 10} diem. Anh da duoc them vao My Vibe.`,
-        status: "success",
-        duration: 2600,
-        position: "top"
-      });
-    } catch (error) {
-      toast({ title: error.message || "Khong the check-in", status: "warning", duration: 2200, position: "top" });
-    }
+  function handleVerified() {
+    setRevision(value => value + 1);
+    queryClient.invalidateQueries();
+    Promise.all([loadCafes(), me().then(setUser)]).catch(() => {
+      toast({ title: "Da check-in. Tai lai trang de cap nhat diem.", status: "info", duration: 2400 });
+    });
   }
 
-  const visibleCafes = results || cafes;
+  const filteredCafes = filterCafes(cafes, { q: searchTerm, vibe: activeVibe, district, maxDistance, minRating });
+  const pageSize = 6;
+  const totalPages = Math.max(1, Math.ceil(filteredCafes.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visibleCafes = filteredCafes.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const districts = [...new Set(cafes.map((cafe) => cafe.district).filter(Boolean))].sort();
+
+  function changeFilter(setValue, value) {
+    setValue(value);
+    setPage(1);
+  }
 
   return (
     <Box className="map-tab-shell">
@@ -240,30 +254,16 @@ export default function MapView() {
         </form>
 
         <Box className="map-left-panel">
-          {results ? (
-            <>
+          {searchTerm ? (
               <Flex align="center" justify="space-between" gap={3}>
                 <Text className="search-results-note">
-                  Tim thay {results.length} quan cho "{query}"
+                  Tim thay {filteredCafes.length} quan cho "{searchTerm}"
                 </Text>
                 <Button className="pager" onClick={clearSearch} aria-label="Xoa tim kiem">
                   <X size={18} />
                 </Button>
               </Flex>
-              {visibleCafes.length > 0 ? (
-                <Stack spacing={3} mt={3}>
-                  {visibleCafes.map((cafe) => (
-                    <CafeListCard key={cafe.id} cafe={cafe} onCheckIn={handleCheckIn} onFavorite={handleFavorite} />
-                  ))}
-                </Stack>
-              ) : (
-                <Text className="no-results">
-                  Khong tim thay quan nao khop. Thu tu khoa khac nhe!
-                </Text>
-              )}
-            </>
-          ) : (
-            <>
+          ) : null}
               <Flex gap={3} wrap="wrap">
                 {filters.map((filter) => {
                   const Icon = filter.icon;
@@ -281,9 +281,25 @@ export default function MapView() {
               </Flex>
 
               <SimpleGrid columns={3} gap={3} className="select-row">
-                {["Khoang cach", "Quan/Huyen", "Danh gia"].map((item) => (
-                  <Button key={item} className="select-chip">{item}<ChevronDown size={16} /></Button>
-                ))}
+                <Select className="select-chip" aria-label="Khoang cach" value={maxDistance} onChange={(event) => changeFilter(setMaxDistance, event.target.value)}>
+                  <option value="">Khoang cach: Tat ca</option>
+                  <option value="500">Trong 500 m</option>
+                  <option value="1000">Trong 1 km</option>
+                  <option value="3000">Trong 3 km</option>
+                  <option value="5000">Trong 5 km</option>
+                  <option value="10000">Trong 10 km</option>
+                </Select>
+                <Select className="select-chip" aria-label="Quan/Huyen" value={district} onChange={(event) => changeFilter(setDistrict, event.target.value)}>
+                  <option value="">Quan/Huyen: Tat ca</option>
+                  {districts.map((item) => <option key={item} value={item}>{item}</option>)}
+                </Select>
+                <Select className="select-chip" aria-label="Danh gia" value={minRating} onChange={(event) => changeFilter(setMinRating, event.target.value)}>
+                  <option value="">Danh gia: Tat ca</option>
+                  <option value="4">Tu 4 sao</option>
+                  <option value="4.5">Tu 4.5 sao</option>
+                  <option value="4.8">Tu 4.8 sao</option>
+                  <option value="4.9">Tu 4.9 sao</option>
+                </Select>
               </SimpleGrid>
 
               <Flex className="region-switcher" gap={2} wrap="wrap">
@@ -299,23 +315,23 @@ export default function MapView() {
               </Flex>
 
               <Stack spacing={3}>
-                {cafes.map((cafe, index) => (
-                  <CafeListCard key={cafe.id} cafe={cafe} active={index === 0} onCheckIn={handleCheckIn} onFavorite={handleFavorite} />
+                {visibleCafes.map((cafe, index) => (
+                  <CafeListCard key={cafe.id} cafe={cafe} active={index === 0} onCheckIn={setCheckinCafe} onFavorite={handleFavorite} onOpenMap={setLocationCafe} />
                 ))}
               </Stack>
+              {loading ? <Text role="status">Dang tai quan...</Text> : loadError ? <Text role="alert">{loadError}</Text> : !filteredCafes.length ? <Text className="no-results">Khong tim thay quan phu hop. Thu doi bo loc hoac tu khoa.</Text> : null}
 
               <Flex align="center" justify="space-between" mt={3}>
-                <Text className="result-count">Hien thi {cafes.length}/120 quan</Text>
+                <Text className="result-count">{filteredCafes.length ? `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, filteredCafes.length)}` : "0"}/{filteredCafes.length} quan</Text>
                 <HStack>
-                  <Button className="pager" isDisabled><ChevronLeft size={18} /></Button>
-                  <Button className="pager"><ChevronRight size={18} /></Button>
+                  <Button className="pager" aria-label="Trang truoc" isDisabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><ChevronLeft size={18} /></Button>
+                  <Text>{currentPage}/{totalPages}</Text>
+                  <Button className="pager" aria-label="Trang sau" isDisabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}><ChevronRight size={18} /></Button>
                 </HStack>
               </Flex>
-            </>
-          )}
         </Box>
 
-        <RightPanels />
+        <RightPanels revision={revision} />
 
         <Flex className="map-bottom-dock">
           {dockItems.map((item) => {
@@ -329,6 +345,9 @@ export default function MapView() {
           })}
         </Flex>
       </Box>
+      {checkinCafe ? <VibeCheckModal key={checkinCafe.id} cafe={checkinCafe} onClose={() => setCheckinCafe(null)} onVerified={handleVerified} /> : null}
+      {locationCafe ? <CafeLocationModal key={locationCafe.id} cafe={locationCafe} cafes={cafes} onSelectCafe={setLocationCafe}
+        onClose={() => setLocationCafe(null)} onCheckIn={cafe => { setLocationCafe(null); setCheckinCafe(cafe); }} /> : null}
     </Box>
   );
 }

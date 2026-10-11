@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { ok, fail } from "../utils/responses.js";
+import { createReceipt, validateReceipt } from "../../../shared/demoReceipts.mjs";
 
 const router = Router();
+const receipts = [];
 
 const user = {
   id: "demo-admin",
@@ -80,11 +82,26 @@ router.get("/cafes/nearby", (req, res) => {
   return ok(res, data);
 });
 router.get("/cafes/:id", (req, res) => ok(res, cafes.find((cafe) => cafe.id === req.params.id) || null));
+router.post("/cafes/:id/receipts", requireDemoAuth, (req, res) => {
+  const cafe = cafes.find(item => item.id === req.params.id);
+  if (!cafe) return fail(res, "CAFE_NOT_FOUND", "Khong tim thay quan", 404);
+  const receipt = createReceipt(cafe, receipts);
+  receipts.push(receipt);
+  return ok(res, receipt, "Hoa don demo", 201);
+});
 
 router.post("/checkins", requireDemoAuth, (req, res) => {
   const cafe = cafes.find((item) => item.id === req.body.cafeId);
   if (!cafe) return fail(res, "CAFE_NOT_FOUND", "Khong tim thay quan", 404);
+  let receipt;
+  try {
+    receipt = validateReceipt(receipts, cafe.id, req.body.receiptCode);
+  } catch (error) {
+    return fail(res, "INVALID_RECEIPT", error.message, 422);
+  }
   const checkin = { id: `ck-${Date.now()}`, userId: user.id, cafeId: cafe.id, cafe, createdAt: new Date().toISOString(), points: 30 };
+  checkin.receiptId = receipt.id;
+  receipt.usedAt = checkin.createdAt;
   checkins.unshift(checkin);
   photos.unshift({ id: `p-${Date.now()}`, userId: user.id, cafeId: cafe.id, url: cafe.coverUrl, caption: `Vibe Check tai ${cafe.name}`, likes: 0 });
   user.totalPoints += 30;

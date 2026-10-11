@@ -1,5 +1,5 @@
 import api from "./api.js";
-import { createDemoCheckin, getDemoCafe, getDemoCafes, isDemoMode, toggleDemoFavorite } from "./demoService.js";
+import { createDemoCheckin, getDemoCafe, getDemoCafes, isDemoMode, issueDemoReceipt, toggleDemoFavorite } from "./demoService.js";
 
 export async function getNearbyCafes(params) {
   if (isDemoMode) return getDemoCafes(params);
@@ -16,6 +16,12 @@ export async function getCafe(id) {
 export async function checkInCafe(payload) {
   if (isDemoMode) return createDemoCheckin(payload);
   const { data } = await api.post("/checkins", payload);
+  return data.data;
+}
+
+export async function issueCafeReceipt(cafeId) {
+  if (isDemoMode) return issueDemoReceipt(cafeId);
+  const { data } = await api.post(`/cafes/${cafeId}/receipts`);
   return data.data;
 }
 

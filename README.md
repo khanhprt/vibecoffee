@@ -10,7 +10,11 @@ The workflow in `.github/workflows/deploy-pages.yml` builds and publishes the fr
 2. Push these changes to `main` and wait for the **Deploy Frontend to GitHub Pages** workflow to finish. You can also run it manually from **Actions**.
 3. Open `https://khanhprt.github.io/vibecoffee/` (or the URL shown by the deployment).
 
-Sign in with username **admin** and password **admin**. The demo opens Profile after login. Profile edits and the session are stored only in that browser; they are not shared between visitors. This is a public UI test account, not a backend administrator account. Registration is disabled in demo mode.
+The demo automatically signs in to the demo account. If prompted, use username **admin** and password **admin**. Fake data, check-ins, favorites, quest rewards, and profile edits are stored in that browser and persist after a refresh; they are not shared between visitors. Registration is disabled in demo mode.
+
+On Map, Vibe Check opens a receipt confirmation dialog. Choose **Lay hoa don mau** to generate a sample invoice for that cafe, enter its eight-character code, and confirm to earn 30 points. Each invoice code belongs to one cafe, expires after 24 hours, and can be redeemed once. This demo simulates cafe-issued invoices; it is not connected to a real checkout system.
+
+Click a cafe name to open its street map. Leaflet 1.9.4 (BSD-2-Clause) uses OpenStreetMap tiles and the demo cafe latitude/longitude, with zoom controls and selectable pins. No API key is needed. Street-map tiles require an internet connection; cafe data and receipt actions still run locally. These are demo cafe locations, not verified business listings. OpenStreetMap attribution remains visible on the map. The app does not prefetch or package tiles for offline use.
 
 The deployed app uses hash routes (for example, `/#/profile`) so refreshing or opening a page directly works on GitHub Pages. Asset paths follow the Pages base path, including when using a custom domain.
 
@@ -19,7 +23,7 @@ To run the same demo locally:
 ```bash
 cd frontend
 npm ci
-npm run dev:demo
+npm run dev
 ```
 
 To run the backend-connected demo without PostgreSQL, start the fake API and the normal frontend:
@@ -33,7 +37,7 @@ npm run dev:fake
 ```bash
 cd frontend
 npm ci
-npm run dev
+npm run dev:api
 ```
 
 The fake API keeps data in memory while the process is running. Use `admin` / `admin` to sign in, then try map search, Vibe Check, quest rewards, leaderboard updates, and profile edits.
@@ -45,7 +49,7 @@ npm run build:demo
 npm run preview
 ```
 
-Demo mode defaults to frontend-only login and hash routing. Explicit `VITE_DEMO_MODE` / `VITE_ROUTER_MODE` values in your environment override those defaults; the deployment workflow sets both explicitly. Ordinary `npm run dev` / `npm run build` preserve the backend-connected app. See `frontend/.env.example` for the available settings.
+Ordinary `npm run dev` / `npm run build` default to the frontend-only fake-data demo and hash routing, ready for GitHub Pages. The workflow deploys it automatically on pushes to `main` that change frontend files. Use `npm run dev:api` / `npm run build:api` to opt into the backend-connected app. Explicit `VITE_DEMO_MODE` / `VITE_ROUTER_MODE` values in your environment override those defaults. See `frontend/.env.example` for the available settings.
 
 ## Project Structure
 
@@ -93,5 +97,5 @@ Start the frontend in another terminal:
 
 ```bash
 cd frontend
-npm run dev
+npm run dev:api
 ```

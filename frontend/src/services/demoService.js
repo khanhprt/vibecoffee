@@ -1,4 +1,6 @@
 import { cafes, leaderboard, profilePhotos, quests, vouchers } from "../data/mockData.js";
+import { filterCafes } from "../data/filterCafes.js";
+import { createReceipt, validateReceipt } from "../../../shared/demoReceipts.mjs";
 
 export const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
 export const DEMO_TOKEN = "vibe-coffee-demo-admin";
@@ -41,14 +43,20 @@ function freshDb() {
       { id: "ck-demo-2", cafeId: "cafe-2", createdAt: "2026-10-08T03:20:00.000Z", points: 10 }
     ],
     feedLikes: { p1: true, p2: false },
-    notices: []
+    notices: [],
+    receipts: []
   };
 }
 
 export function getDemoDb() {
   try {
     const saved = JSON.parse(localStorage.getItem(DB_KEY));
-    if (saved?.profile?.id) return saved;
+    if (saved?.profile?.id) {
+      // Refresh seeded cafes without discarding the visitor's demo actions.
+      saved.cafes = clone(cafes);
+      saved.receipts ??= [];
+      return saved;
+    }
   } catch {
     // Fall through to a fresh database.
   }
@@ -139,12 +147,8 @@ export function updateDemoProfile({ username, bio }) {
 
 export function getDemoCafes(params = {}) {
   const db = getDemoDb();
-  const keyword = (params.q || params.keyword || "").trim().toLowerCase();
-  const vibe = params.vibe;
-  return db.cafes
-    .filter((cafe) => !keyword || cafe.name.toLowerCase().includes(keyword) || cafe.address.toLowerCase().includes(keyword))
-    .filter((cafe) => !vibe || vibe === "all" || cafe.vibes.includes(vibe))
-    .map((cafe) => ({ ...cafe, favorite: db.favorites.includes(cafe.id), checkedIn: db.checkins.some((item) => item.cafeId === cafe.id) }));
+  const decorated = db.cafes.map((cafe) => ({ ...cafe, favorite: db.favorites.includes(cafe.id), checkedIn: db.checkins.some((item) => item.cafeId === cafe.id) }));
+  return filterCafes(decorated, { ...params, q: params.q || params.keyword || "" });
 }
 
 export function getDemoCafe(id) {
@@ -160,17 +164,22 @@ export function toggleDemoFavorite(cafeId) {
   return getDemoCafe(cafeId);
 }
 
-export function createDemoCheckin({ cafeId }) {
+export function issueDemoReceipt(cafeId) {
+  const db = getDemoDb();
+  const cafe = db.cafes.find(item => item.id === cafeId);
+  if (!cafe) throw new Error("Khong tim thay quan ca phe.");
+  const receipt = createReceipt(cafe, db.receipts);
+  db.receipts.push(receipt);
+  saveDemoDb(db);
+  return clone(receipt);
+}
+
+export function createDemoCheckin({ cafeId, receiptCode }) {
   const db = getDemoDb();
   const cafe = db.cafes.find((item) => item.id === cafeId);
   if (!cafe) throw new Error("Khong tim thay quan ca phe.");
 
-  const checkedToday = db.checkins.some((checkin) => {
-    const sameCafe = checkin.cafeId === cafeId;
-    const sameDay = new Date(checkin.createdAt).toDateString() === new Date().toDateString();
-    return sameCafe && sameDay;
-  });
-  if (checkedToday) throw new Error("Hom nay ban da Vibe Check quan nay roi.");
+  const receipt = validateReceipt(db.receipts, cafeId, receiptCode);
 
   const photo = {
     id: `p-${Date.now()}`,
@@ -181,6 +190,7 @@ export function createDemoCheckin({ cafeId }) {
   };
   const checkin = {
     id: `ck-${Date.now()}`,
+    receiptId: receipt.id,
     cafeId,
     cafe,
     photoUrl: cafe.coverUrl,
@@ -190,6 +200,7 @@ export function createDemoCheckin({ cafeId }) {
     createdAt: new Date().toISOString()
   };
 
+  receipt.usedAt = checkin.createdAt;
   db.checkins.unshift(checkin);
   db.photos.unshift(photo);
   db.profile.totalPoints += 30;

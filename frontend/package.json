@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "dev:demo": "vite --host 0.0.0.0 --mode demo",
+    "dev:api": "vite --host 0.0.0.0 --mode api",
     "build": "vite build",
     "build:demo": "vite build --mode demo",
+    "build:api": "vite build --mode api",
     "preview": "vite preview --host 0.0.0.0",
     "lint": "eslint ."
   },
@@ -18,6 +20,7 @@
     "@tanstack/react-query": "^5.62.7",
     "axios": "^1.7.9",
     "framer-motion": "^11.15.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.468.0",
     "mapbox-gl": "^3.9.0",
     "react": "^19.1.0",

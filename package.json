@@ -6,6 +6,7 @@
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:frontend:demo": "npm run dev:demo --prefix frontend",
+    "dev:frontend:api": "npm run dev:api --prefix frontend",
     "dev:backend": "npm run dev --prefix backend",
     "dev:backend:fake": "npm run dev:fake --prefix backend",
     "build": "npm run build --prefix frontend",

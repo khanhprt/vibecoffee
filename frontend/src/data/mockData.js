@@ -3,6 +3,7 @@ import { assetUrl } from "../utils/assetUrl.js";
 export const cafes = [
   {
     id: "cafe-1",
+    district: "Hoan Kiem",
     name: "Pink Pixel Brew",
     address: "12 Dinh Tien Hoang, Hoan Kiem, Ha Noi",
     lat: 21.0286,
@@ -21,6 +22,7 @@ export const cafes = [
   },
   {
     id: "cafe-2",
+    district: "Hoan Kiem",
     name: "Cong Ca Phe Nha Tho",
     address: "27 Nha Tho, Hoan Kiem, Ha Noi",
     lat: 21.0289,
@@ -39,6 +41,7 @@ export const cafes = [
   },
   {
     id: "cafe-3",
+    district: "Hoan Kiem",
     name: "Lofita Trang Tien",
     address: "30A Trang Tien, Hoan Kiem, Ha Noi",
     lat: 21.0249,
@@ -57,6 +60,7 @@ export const cafes = [
   },
   {
     id: "cafe-4",
+    district: "Hoan Kiem",
     name: "The Note Coffee",
     address: "64 Luong Van Can, Hoan Kiem, Ha Noi",
     lat: 21.0315,
@@ -75,6 +79,7 @@ export const cafes = [
   },
   {
     id: "cafe-5",
+    district: "Hoan Kiem",
     name: "Tang Tret Slow Bar",
     address: "8 Chan Cam, Hoan Kiem, Ha Noi",
     lat: 21.0294,
@@ -93,6 +98,7 @@ export const cafes = [
   },
   {
     id: "cafe-6",
+    district: "Tay Ho",
     name: "Ho Tay Sunset Beans",
     address: "15 Tu Hoa, Tay Ho, Ha Noi",
     lat: 21.0601,
@@ -110,6 +116,43 @@ export const cafes = [
     coverUrl: assetUrl("map-ho-tay-pixel.png")
   }
 ];
+
+const extraCafes = [
+  { name: "Old Quarter Egg Coffee", street: "18 Hang Bac", district: "Hoan Kiem", distanceMeters: 450, rating: 4.8, lat: 21.034, lng: 105.853, vibes: ["vintage", "do-uong-ngon"] },
+  { name: "Bookworm Coffee", street: "9 Hang Trong", district: "Hoan Kiem", distanceMeters: 900, rating: 4.3, lat: 21.029, lng: 105.851, vibes: ["yen-tinh", "lam-viec"] },
+  { name: "Truc Bach Morning Brew", street: "22 Tran Vu", district: "Ba Dinh", distanceMeters: 2400, rating: 4.7, lat: 21.045, lng: 105.839, vibes: ["view-dep", "chill"] },
+  { name: "Kim Ma Study House", street: "120 Kim Ma", district: "Ba Dinh", distanceMeters: 4100, rating: 4.4, lat: 21.031, lng: 105.819, vibes: ["lam-viec", "yen-tinh"] },
+  { name: "Ngoc Ha Garden Cafe", street: "38 Ngoc Ha", district: "Ba Dinh", distanceMeters: 3200, rating: 4.9, lat: 21.038, lng: 105.826, vibes: ["view-dep", "khong-gian-rong"] },
+  { name: "West Lake Roastery", street: "54 Quang An", district: "Tay Ho", distanceMeters: 5200, rating: 4.9, lat: 21.062, lng: 105.825, vibes: ["ho-tay", "do-uong-ngon", "lam-viec"] },
+  { name: "Nhat Chieu Lakeside", street: "66 Nhat Chieu", district: "Tay Ho", distanceMeters: 6700, rating: 4.6, lat: 21.074, lng: 105.813, vibes: ["ho-tay", "view-dep", "chill"] },
+  { name: "Xuan Dieu Matcha Room", street: "42 Xuan Dieu", district: "Tay Ho", distanceMeters: 4800, rating: 4.2, lat: 21.06, lng: 105.829, vibes: ["song-ao", "lam-viec"] },
+  { name: "Temple Beans", street: "16 Van Mieu", district: "Dong Da", distanceMeters: 2300, rating: 4.8, lat: 21.028, lng: 105.836, vibes: ["vintage", "yen-tinh"] },
+  { name: "Lang Ha Work Cafe", street: "80 Lang Ha", district: "Dong Da", distanceMeters: 5600, rating: 4.5, lat: 21.015, lng: 105.814, vibes: ["lam-viec", "khong-gian-rong"] },
+  { name: "O Cho Dua Vinyl Bar", street: "25 O Cho Dua", district: "Dong Da", distanceMeters: 3900, rating: 4.1, lat: 21.017, lng: 105.828, vibes: ["vintage", "chill"] },
+  { name: "Bach Mai Espresso Lab", street: "108 Bach Mai", district: "Hai Ba Trung", distanceMeters: 3600, rating: 4.7, lat: 21.003, lng: 105.849, vibes: ["do-uong-ngon", "lam-viec"] },
+  { name: "Thong Nhat Park Coffee", street: "28 Tran Nhan Tong", district: "Hai Ba Trung", distanceMeters: 1800, rating: 4.6, lat: 21.018, lng: 105.843, vibes: ["view-dep", "chill"] },
+  { name: "Minh Khai Rooftop", street: "210 Minh Khai", district: "Hai Ba Trung", distanceMeters: 6100, rating: 4.3, lat: 20.996, lng: 105.862, vibes: ["song-ao", "view-dep"] },
+  { name: "Cau Giay Focus Hub", street: "75 Cau Giay", district: "Cau Giay", distanceMeters: 7200, rating: 4.8, lat: 21.033, lng: 105.798, vibes: ["lam-viec", "yen-tinh"] },
+  { name: "Dich Vong Greenhouse", street: "32 Dich Vong", district: "Cau Giay", distanceMeters: 8100, rating: 4.5, lat: 21.036, lng: 105.789, vibes: ["khong-gian-rong", "view-dep"] },
+  { name: "Long Bien River Coffee", street: "19 Ngoc Lam", district: "Long Bien", distanceMeters: 4300, rating: 4.7, lat: 21.047, lng: 105.871, vibes: ["view-dep", "chill"] },
+  { name: "Gia Lam Weekend Brew", street: "88 Nguyen Van Cu", district: "Long Bien", distanceMeters: 5900, rating: 4.0, lat: 21.051, lng: 105.883, vibes: ["khong-gian-rong", "lam-viec"] }
+];
+
+extraCafes.forEach((cafe, index) => {
+  cafes.push({
+    ...cafe,
+    id: `cafe-${index + 7}`,
+    address: `${cafe.street}, ${cafe.district}, Ha Noi`,
+    distance: cafe.distanceMeters < 1000 ? `${cafe.distanceMeters} m` : `${cafe.distanceMeters / 1000} km`,
+    reviews: 120 + index * 23,
+    priceRange: index % 2 ? "35k - 75k" : "45k - 95k",
+    openHours: "07:00 - 22:00",
+    phone: `024 8888 ${String(1007 + index)}`,
+    signature: index % 2 ? "Latte kem muoi" : "Cold brew cam",
+    description: `Goc ca phe tai ${cafe.district}, hop gap ban be va thu do uong moi.`,
+    coverUrl: cafes[index % 6].coverUrl
+  });
+});
 
 export const quests = [
   {
