@@ -11,6 +11,7 @@ import questRoutes from "./routes/questRoutes.js";
 import voucherRoutes from "./routes/voucherRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { prisma } from "./config/database.js";
+import fakeRoutes from "./demo/fakeRoutes.js";
 
 const app = express();
 
@@ -19,6 +20,9 @@ app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/health", async (req, res) => {
+  if (env.FAKE_DB_MODE === "true") {
+    return res.json({ ok: true, database: "fake-memory", name: "vibe-coffee-api" });
+  }
   try {
     await prisma.$queryRaw`SELECT 1`;
     return res.json({ ok: true, database: "connected", name: "vibe-coffee-api" });
@@ -27,13 +31,17 @@ app.get("/health", async (req, res) => {
   }
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/cafes", cafeRoutes);
-app.use("/api/checkins", checkinRoutes);
-app.use("/api/quests", questRoutes);
-app.use("/api/leaderboard", leaderboardRoutes);
-app.use("/api/profile", profileRoutes);
-app.use("/api/vouchers", voucherRoutes);
+if (env.FAKE_DB_MODE === "true") {
+  app.use("/api", fakeRoutes);
+} else {
+  app.use("/api/auth", authRoutes);
+  app.use("/api/cafes", cafeRoutes);
+  app.use("/api/checkins", checkinRoutes);
+  app.use("/api/quests", questRoutes);
+  app.use("/api/leaderboard", leaderboardRoutes);
+  app.use("/api/profile", profileRoutes);
+  app.use("/api/vouchers", voucherRoutes);
+}
 
 app.use(notFound);
 app.use(errorHandler);

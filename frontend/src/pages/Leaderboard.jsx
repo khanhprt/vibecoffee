@@ -1,37 +1,35 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Camera, ChevronDown, Crown, Heart, Medal, Sparkles, Star, Trophy } from "lucide-react";
 import AmbientPetals from "../components/common/AmbientPetals.jsx";
 import PixelAvatar from "../components/common/PixelAvatar.jsx";
 import { assetUrl } from "../utils/assetUrl.js";
+import { getLeaderboard } from "../services/leaderboardService.js";
 
 const tabs = [
-  { id: "overall", label: "Bảng xếp hạng chung", icon: Trophy },
+  { id: "overall", label: "Bang xep hang chung", icon: Trophy },
   { id: "checkin", label: "Top Vibe Check", icon: Medal },
-  { id: "photo", label: "Top Ảnh đẹp", icon: Camera },
-  { id: "quest", label: "Top Hoàn thành Quest", icon: Star }
+  { id: "photo", label: "Top Anh dep", icon: Camera },
+  { id: "quest", label: "Top Hoan thanh Quest", icon: Star }
 ];
 
 const filters = {
-  time: ["Tuần này", "Tháng này", "Tất cả thời gian"],
-  region: ["Toàn quốc", "Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng", "Khác"]
+  time: ["Tuan nay", "Thang nay", "Tat ca thoi gian"],
+  region: ["Toan quoc", "Ha Noi", "TP. Ho Chi Minh", "Da Nang", "Khac"]
 };
 
-const leaders = [
-  { rank: 1, username: "bean.master", level: 25, badge: "Legend", checkins: "1,248", quests: 42, points: "5,860", tone: "gold" },
-  { rank: 2, username: "coffee.love", level: 18, badge: "Explorer", checkins: "892", quests: 31, points: "4,120", tone: "blue" },
-  { rank: 3, username: "hanoicafe", level: 17, badge: "Explorer", checkins: "756", quests: 29, points: "3,860", tone: "coral" },
-  { rank: 4, username: "latte.girl", level: 16, badge: "Explorer", checkins: "682", quests: 28, points: "3,420", tone: "pink" },
-  { rank: 5, username: "cappu.holic", level: 15, badge: "Explorer", checkins: "641", quests: 25, points: "3,210", tone: "coral" },
-  { rank: 6, username: "matcha.day", level: 14, badge: "Explorer", checkins: "598", quests: 24, points: "2,980", tone: "mint" },
-  { rank: 7, username: "chill.brew", level: 13, badge: "Wanderer", checkins: "554", quests: 22, points: "2,760", tone: "pink" },
-  { rank: 8, username: "saigon.coffee", level: 13, badge: "Wanderer", checkins: "521", quests: 20, points: "2,605", tone: "coral" },
-  { rank: 9, username: "vietnam.beans", level: 12, badge: "Wanderer", checkins: "497", quests: 19, points: "2,485", tone: "mint" },
-  { rank: 10, username: "cafe.traveler", level: 11, badge: "Wanderer", checkins: "468", quests: 18, points: "2,340", tone: "pink" }
-];
+function fmt(value) {
+  return Number(value || 0).toLocaleString("en-US");
+}
 
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState("overall");
-  const podium = [leaders[1], leaders[0], leaders[2]];
+  const leaderboardQuery = useQuery({
+    queryKey: ["leaderboard", activeTab],
+    queryFn: () => getLeaderboard({ period: activeTab })
+  });
+  const leaders = leaderboardQuery.data?.users || [];
+  const podium = [leaders[1], leaders[0], leaders[2]].filter(Boolean);
   const rows = leaders.slice(3);
 
   return (
@@ -41,7 +39,7 @@ export default function Leaderboard() {
         <div className="board-title-wrap">
           <Crown size={54} />
           <h1>Vibe Board</h1>
-          <p>Những tâm hồn yêu cà phê tỏa sáng</p>
+          <p>Nhung tam hon yeu ca phe toa sang</p>
         </div>
       </div>
 
@@ -62,11 +60,11 @@ export default function Leaderboard() {
 
       <div className="board-content">
         <aside className="board-filter-panel">
-          <FilterGroup icon="calendar" title="Thời gian" items={filters.time} />
-          <FilterGroup icon="pin" title="Khu vực" items={filters.region} withSelect />
+          <FilterGroup icon="calendar" title="Thoi gian" items={filters.time} />
+          <FilterGroup icon="pin" title="Khu vuc" items={filters.region} withSelect />
           <div className="board-cat-note">
-            <img src={assetUrl("board-calico-cat.png")} alt="Mèo tam thể pixel" />
-            <p>Cùng nhau tạo nên cộng đồng yêu cà phê thật tuyệt vời nhé!</p>
+            <img src={assetUrl("board-calico-cat.png")} alt="Pixel companion" />
+            <p>Cung nhau tao nen cong dong yeu ca phe that tuyet voi nhe!</p>
           </div>
         </aside>
 
@@ -85,29 +83,29 @@ export default function Leaderboard() {
                 <p>Lv. {user.level} <b>{user.badge}</b></p>
                 <div className="podium-score">
                   <span className="podium-coffee" aria-hidden="true" />
-                  <div><strong>{user.checkins}</strong><small>Vibe Check</small></div>
+                  <div><strong>{fmt(user.checkins)}</strong><small>Vibe Check</small></div>
                 </div>
               </article>
             ))}
           </div>
 
-          <div className="leader-table" role="table" aria-label="Bảng xếp hạng Vibe Coffee">
+          <div className="leader-table" role="table" aria-label="Bang xep hang Vibe Coffee">
             <div className="leader-head" role="row">
               <span>#</span>
-              <span>Người dùng</span>
-              <span>Cấp độ</span>
+              <span>Nguoi dung</span>
+              <span>Cap do</span>
               <span>Vibe Check</span>
               <span>Quest</span>
-              <span>Điểm Vibe</span>
+              <span>Diem Vibe</span>
             </div>
             {rows.map((user) => (
-              <div className="leader-row" role="row" key={user.username}>
+              <div className={user.id === "me" ? "leader-row current" : "leader-row"} role="row" key={user.username}>
                 <span>{user.rank}</span>
                 <span><PixelAvatar user={user} className="mini-avatar" />{user.username}</span>
                 <span>Lv. {user.level} <b>{user.badge}</b></span>
-                <span><Medal size={17} />{user.checkins}</span>
+                <span><Medal size={17} />{fmt(user.checkins)}</span>
                 <span>{user.quests}</span>
-                <span><Star size={17} fill="currentColor" />{user.points}</span>
+                <span><Star size={17} fill="currentColor" />{fmt(user.points || user.totalPoints)}</span>
               </div>
             ))}
           </div>
@@ -120,7 +118,7 @@ export default function Leaderboard() {
 function FilterGroup({ icon, title, items, withSelect }) {
   return (
     <section className="filter-group">
-      <h2><span aria-hidden="true">{icon === "calendar" ? "▣" : "◇"}</span>{title}</h2>
+      <h2><span aria-hidden="true">{icon === "calendar" ? "*" : "+"}</span>{title}</h2>
       {items.map((item, index) => (
         <label className={index === 0 ? "active" : ""} key={item}>
           <input defaultChecked={index === 0} name={title} type="radio" />

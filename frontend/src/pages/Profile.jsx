@@ -32,7 +32,7 @@ import PixelAvatar from "../components/common/PixelAvatar.jsx";
 import PhotoGrid from "../components/profile/PhotoGrid.jsx";
 import ProfileHeader from "../components/profile/ProfileHeader.jsx";
 import { useAuth } from "../hooks/useAuth.js";
-import { getMyProfile, getPhotos, updateMyProfile } from "../services/profileService.js";
+import { getMyCheckins, getMyProfile, getPhotos, updateMyProfile } from "../services/profileService.js";
 import { assetUrl } from "../utils/assetUrl.js";
 
 const DEFAULT_COVER = assetUrl("profile-hoan-kiem-cover.png");
@@ -117,6 +117,11 @@ export default function Profile() {
     queryFn: () => getPhotos(profileQuery.data.id),
     enabled: Boolean(profileQuery.data?.id)
   });
+  const checkinsQuery = useQuery({
+    queryKey: ["profile", "me", "checkins"],
+    queryFn: getMyCheckins,
+    enabled: Boolean(profileQuery.data?.id)
+  });
   const updateProfile = useMutation({
     mutationFn: updateMyProfile,
     onSuccess: (profile) => {
@@ -197,7 +202,7 @@ export default function Profile() {
                 <div className="profile-empty-state">
                   <MapPin />
                   <strong>Nhung diem hen da ghe</strong>
-                  <p>Pink Pixel Brew, Ho Guom va Pho Co Ha Noi.</p>
+                  <p>{(checkinsQuery.data || []).slice(0, 5).map((checkin) => checkin.cafe?.name).filter(Boolean).join(", ") || "Hay Vibe Check quan dau tien tren ban do."}</p>
                 </div>
               ) : null}
               {activeTab === "saved" ? (

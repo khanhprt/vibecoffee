@@ -20,7 +20,7 @@ import SiteFooter from "../components/common/SiteFooter.jsx";
 import PixelAvatar from "../components/common/PixelAvatar.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import * as authService from "../services/authService.js";
-import { isDemoMode } from "../services/demoService.js";
+import { ensureDemoSession, isDemoMode } from "../services/demoService.js";
 
 const navItems = [
   { to: "/", label: "Home", icon: Coffee },
@@ -44,7 +44,7 @@ const headerCopy = {
 export default function MainLayout() {
   const location = useLocation();
   const outlet = useOutlet();
-  const { user, token, setUser, logout: clearSession } = useAuth();
+  const { user, token, setSession, setUser, logout: clearSession } = useAuth();
   const [authMode, setAuthMode] = useState(null);
   const [motionPreference, setMotionPreference] = useState(() => {
     const savedPreference = localStorage.getItem("vibe-coffee-motion");
@@ -63,6 +63,11 @@ export default function MainLayout() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isDemoMode || token) return;
+    setSession(ensureDemoSession());
+  }, [setSession, token]);
 
   useEffect(() => {
     if (!token || user) return;

@@ -9,9 +9,10 @@ import {
   Progress,
   SimpleGrid,
   Stack,
-  Text
+  Text,
+  useToast
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Camera,
   ChevronDown,
@@ -29,16 +30,18 @@ import {
   Trophy,
   X
 } from "lucide-react";
-import { cafes, leaderboard, quests } from "../../data/mockData.js";
 import PixelAvatar from "../common/PixelAvatar.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
 import { assetUrl } from "../../utils/assetUrl.js";
+import { checkInCafe, getNearbyCafes, toggleFavorite } from "../../services/cafeService.js";
+import { getLeaderboard } from "../../services/leaderboardService.js";
+import { getQuests } from "../../services/questService.js";
 
 const filters = [
-  { label: "Tat ca", icon: Coffee, active: true },
-  { label: "Gan day", icon: LocateFixed },
-  { label: "Yeu thich", icon: Heart },
-  { label: "Da check-in", icon: Camera }
+  { label: "Tat ca", icon: Coffee, vibe: "all" },
+  { label: "Gan day", icon: LocateFixed, vibe: "all" },
+  { label: "Yeu thich", icon: Heart, vibe: "favorite" },
+  { label: "Lam viec", icon: Camera, vibe: "lam-viec" }
 ];
 
 const dockItems = [
@@ -54,14 +57,16 @@ const regions = [
   { id: "ho-tay", label: "Ho Tay", image: assetUrl("map-ho-tay-pixel.png") }
 ];
 
-function CafeListCard({ cafe, active }) {
+function CafeListCard({ cafe, active, onCheckIn, onFavorite }) {
   return (
     <Box className={`map-cafe-card ${active ? "is-active" : ""}`}>
       <Image src={cafe.coverUrl} alt={cafe.name} className="map-cafe-thumb" />
       <Box minW={0} flex="1">
         <Flex align="start" justify="space-between" gap={2}>
           <Text className="map-cafe-name">{cafe.name}</Text>
-          <Heart className="map-heart" size={23} />
+          <Button className="pager" onClick={() => onFavorite(cafe.id)} aria-label="Luu quan yeu thich">
+            <Heart className="map-heart" size={18} fill={cafe.favorite ? "#ff6fa5" : "none"} />
+          </Button>
         </Flex>
         <HStack className="map-meta-line" spacing={3}>
           <HStack spacing={1}><Star size={15} fill="#ffba2e" /> <span>{cafe.rating}</span></HStack>
@@ -77,14 +82,28 @@ function CafeListCard({ cafe, active }) {
             <Badge key={vibe} className="map-vibe-pill">{vibe.replaceAll("-", " ")}</Badge>
           ))}
         </Flex>
+        <HStack mt={3} spacing={2}>
+          <Button size="sm" className="filter-chip active" onClick={() => onCheckIn(cafe)}>
+            <Camera size={15} /> Vibe Check
+          </Button>
+          {cafe.checkedIn ? <Badge className="map-vibe-pill">Da ghe</Badge> : null}
+          <Badge className="map-vibe-pill">{cafe.priceRange}</Badge>
+        </HStack>
       </Box>
     </Box>
   );
 }
 
 function RightPanels() {
-  const quest = quests[1];
+  const [quests, setQuests] = useState([]);
+  const [board, setBoard] = useState([]);
   const { user: currentUser } = useAuth();
+  const quest = quests[1] || quests[0];
+
+  useEffect(() => {
+    getQuests().then(setQuests);
+    getLeaderboard({ period: "week" }).then((data) => setBoard(data.users || data));
+  }, []);
 
   return (
     <Stack className="map-right-panels" spacing={4}>
@@ -93,17 +112,19 @@ function RightPanels() {
           <HStack><ListChecks size={19} /><Text className="side-title">Nhiem vu gan day</Text></HStack>
           <Text className="side-link">Xem tat ca</Text>
         </Flex>
-        <Flex align="center" gap={3} mt={4}>
-          <PixelAvatar user={currentUser} className="side-avatar" />
-          <Box flex="1">
-            <Text className="quest-title">{quest.description}</Text>
-            <HStack>
-              <Progress value={(quest.progress / quest.target) * 100} className="quest-progress" />
-              <Text className="quest-count">{quest.progress}/{quest.target}</Text>
-            </HStack>
-          </Box>
-          <Gift size={28} className="gift-icon" />
-        </Flex>
+        {quest ? (
+          <Flex align="center" gap={3} mt={4}>
+            <PixelAvatar user={currentUser} className="side-avatar" />
+            <Box flex="1">
+              <Text className="quest-title">{quest.description}</Text>
+              <HStack>
+                <Progress value={(quest.progress / quest.target) * 100} className="quest-progress" />
+                <Text className="quest-count">{quest.progress}/{quest.target}</Text>
+              </HStack>
+            </Box>
+            <Gift size={28} className="gift-icon" />
+          </Flex>
+        ) : null}
       </Box>
 
       <Box className="map-side-panel">
@@ -112,12 +133,12 @@ function RightPanels() {
           <ChevronRight size={18} />
         </Flex>
         <Stack spacing={2} mt={3}>
-          {leaderboard.map((user, index) => (
+          {board.slice(0, 5).map((user, index) => (
             <Flex key={user.id} className={user.id === "me" ? "rank-row current" : "rank-row"} align="center">
               <Text className="rank-number">{user.rank || index + 1}</Text>
               <PixelAvatar user={user.id === "me" && currentUser ? currentUser : user} className="rank-avatar" />
               <Text flex="1">{user.username}</Text>
-              <Text fontWeight="900">{user.points.toLocaleString("en-US")}</Text>
+              <Text fontWeight="900">{Number(user.points || user.totalPoints || 0).toLocaleString("en-US")}</Text>
             </Flex>
           ))}
         </Stack>
@@ -127,24 +148,34 @@ function RightPanels() {
 }
 
 export default function MapView() {
+  const toast = useToast();
   const [selectedRegion, setSelectedRegion] = useState(regions[0]);
+  const [activeVibe, setActiveVibe] = useState("all");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null);
+  const [cafes, setCafes] = useState([]);
 
-  function handleSearch(event) {
+  async function loadCafes(nextVibe = activeVibe) {
+    const data = await getNearbyCafes({
+      lat: 21.0286,
+      lng: 105.8524,
+      radius: 5000,
+      vibe: nextVibe === "favorite" ? "all" : nextVibe
+    });
+    const filtered = nextVibe === "favorite" ? data.filter((cafe) => cafe.favorite) : data;
+    setCafes(filtered);
+    return filtered;
+  }
+
+  useEffect(() => {
+    loadCafes();
+  }, []);
+
+  async function handleSearch(event) {
     event.preventDefault();
     const keyword = query.trim().toLowerCase();
     if (!keyword) return;
-    // TODO: thay bằng API Map — geocode vị trí từ `keyword`,
-    // sau đó gợi ý các quán cà phê gần đó theo database quán.
-    // Tạm thời lọc danh sách quán mẫu theo tên/địa chỉ.
-    setResults(
-      cafes.filter(
-        (cafe) =>
-          cafe.name.toLowerCase().includes(keyword) ||
-          cafe.address.toLowerCase().includes(keyword)
-      )
-    );
+    setResults(await getNearbyCafes({ q: keyword }));
   }
 
   function clearSearch() {
@@ -152,11 +183,39 @@ export default function MapView() {
     setResults(null);
   }
 
+  async function handleFilter(filter) {
+    setActiveVibe(filter.vibe);
+    setResults(null);
+    await loadCafes(filter.vibe);
+  }
+
+  async function handleFavorite(cafeId) {
+    await toggleFavorite(cafeId);
+    await loadCafes();
+    toast({ title: "Da cap nhat quan yeu thich", status: "success", duration: 1600, position: "top" });
+  }
+
+  async function handleCheckIn(cafe) {
+    try {
+      const result = await checkInCafe({ cafeId: cafe.id, lat: cafe.lat, lng: cafe.lng, photoUrl: cafe.coverUrl });
+      await loadCafes();
+      toast({
+        title: `Vibe Check thanh cong tai ${cafe.name}`,
+        description: `+${result.pointsAdded || result.points || 10} diem. Anh da duoc them vao My Vibe.`,
+        status: "success",
+        duration: 2600,
+        position: "top"
+      });
+    } catch (error) {
+      toast({ title: error.message || "Khong the check-in", status: "warning", duration: 2200, position: "top" });
+    }
+  }
+
+  const visibleCafes = results || cafes;
+
   return (
     <Box className="map-tab-shell">
-      <Box
-        className="map-background scanlines"
-      >
+      <Box className="map-background scanlines">
         <Box
           key={selectedRegion.id}
           className="map-bg-fade"
@@ -170,12 +229,12 @@ export default function MapView() {
               className="map-search-input"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Nhập vị trí hoặc tên quán, ví dụ: Hồ Gươm..."
-              aria-label="Tìm quán cà phê gần bạn"
+              placeholder="Nhap vi tri hoac ten quan, vi du: Ho Guom..."
+              aria-label="Tim quan ca phe gan ban"
               variant="unstyled"
             />
           </div>
-          <Button type="submit" className="map-search-submit" aria-label="Tìm kiếm">
+          <Button type="submit" className="map-search-submit" aria-label="Tim kiem">
             <Search size={22} />
           </Button>
         </form>
@@ -185,21 +244,21 @@ export default function MapView() {
             <>
               <Flex align="center" justify="space-between" gap={3}>
                 <Text className="search-results-note">
-                  Tìm thấy {results.length} quán cho "{query}"
+                  Tim thay {results.length} quan cho "{query}"
                 </Text>
-                <Button className="pager" onClick={clearSearch} aria-label="Xóa tìm kiếm">
+                <Button className="pager" onClick={clearSearch} aria-label="Xoa tim kiem">
                   <X size={18} />
                 </Button>
               </Flex>
-              {results.length > 0 ? (
+              {visibleCafes.length > 0 ? (
                 <Stack spacing={3} mt={3}>
-                  {results.map((cafe) => (
-                    <CafeListCard key={cafe.id} cafe={cafe} />
+                  {visibleCafes.map((cafe) => (
+                    <CafeListCard key={cafe.id} cafe={cafe} onCheckIn={handleCheckIn} onFavorite={handleFavorite} />
                   ))}
                 </Stack>
               ) : (
                 <Text className="no-results">
-                  Không tìm thấy quán nào khớp. Thử từ khóa khác nhé!
+                  Khong tim thay quan nao khop. Thu tu khoa khac nhe!
                 </Text>
               )}
             </>
@@ -209,7 +268,11 @@ export default function MapView() {
                 {filters.map((filter) => {
                   const Icon = filter.icon;
                   return (
-                    <Button key={filter.label} className={filter.active ? "filter-chip active" : "filter-chip"}>
+                    <Button
+                      key={filter.label}
+                      className={activeVibe === filter.vibe ? "filter-chip active" : "filter-chip"}
+                      onClick={() => handleFilter(filter)}
+                    >
                       <Icon size={16} />
                       {filter.label}
                     </Button>
@@ -237,12 +300,12 @@ export default function MapView() {
 
               <Stack spacing={3}>
                 {cafes.map((cafe, index) => (
-                  <CafeListCard key={cafe.id} cafe={cafe} active={index === 0} />
+                  <CafeListCard key={cafe.id} cafe={cafe} active={index === 0} onCheckIn={handleCheckIn} onFavorite={handleFavorite} />
                 ))}
               </Stack>
 
               <Flex align="center" justify="space-between" mt={3}>
-                <Text className="result-count">Hien thi 5/120 quan</Text>
+                <Text className="result-count">Hien thi {cafes.length}/120 quan</Text>
                 <HStack>
                   <Button className="pager" isDisabled><ChevronLeft size={18} /></Button>
                   <Button className="pager"><ChevronRight size={18} /></Button>

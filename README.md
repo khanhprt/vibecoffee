@@ -22,6 +22,22 @@ npm ci
 npm run dev:demo
 ```
 
+To run the backend-connected demo without PostgreSQL, start the fake API and the normal frontend:
+
+```bash
+cd backend
+npm ci
+npm run dev:fake
+```
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+The fake API keeps data in memory while the process is running. Use `admin` / `admin` to sign in, then try map search, Vibe Check, quest rewards, leaderboard updates, and profile edits.
+
 Or preview a production demo build:
 
 ```bash
